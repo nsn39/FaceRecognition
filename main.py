@@ -1,14 +1,37 @@
+from ast import arg
+from telnetlib import PRAGMA_HEARTBEAT
 import tkinter as tk
 import numpy as np 
 import cv2 as cv
 from PIL import Image, ImageTk
+import argparse 
+from enum import Enum
+
+func_identifier = None
+
+# Create a variable to keep track of the program state
+class ProgState(Enum):
+    NONE = 0
+    CAMERA_BUFFER = 1
+    DETECT_FACE = 2
+    RECOGNIZE_FACE = 3
+
+curr_state = ProgState.CAMERA_BUFFER
 
 def capture_image():
     pass 
 
 ##
 def detect_faces():
+    global func_identifier
+    print(func_identifier)
+
+    global curr_state
+    print(curr_state)
+
     print("Detecting faces...")
+    # Set the current state
+    curr_state = ProgState.DETECT_FACE
 
     # Capture frame-by-frame
     ret, frame = cap.read()
@@ -21,8 +44,8 @@ def detect_faces():
     # Our operations on the frame come here
     cv2image = cv.cvtColor(frame, cv.COLOR_BGR2RGBA)
 
-    cv2image = cv.cvtColor(cv2image, cv.COLOR_BGR2GRAY)
-    cv2image = cv.equalizeHist(cv2image)
+    #cv2image = cv.cvtColor(cv2image, cv.COLOR_BGR2GRAY)
+    #cv2image = cv.equalizeHist(cv2image)
 
     # Detect faces
     faces = face_cascade.detectMultiScale(cv2image)
@@ -40,7 +63,12 @@ def detect_faces():
 
     picture_label.imgtk = imgtk
     picture_label.configure(image=imgtk)
-    picture_label.after(1, detect_faces)
+
+    if curr_state == ProgState.DETECT_FACE:
+        print("2Reached here..")
+        print(func_identifier)
+        window.after_cancel(func_identifier)
+        picture_label.after(1, detect_faces)
 
 ##
 def recognize_faces():
@@ -50,6 +78,12 @@ def load_image():
     pass 
 
 def capture_frame_and_show():
+    print(curr_state)
+    print("Original loop")
+
+    if curr_state != ProgState.CAMERA_BUFFER:
+        exit()
+
     # Capture frame-by-frame
     ret, frame = cap.read()
     
@@ -66,7 +100,13 @@ def capture_frame_and_show():
 
     picture_label.imgtk = imgtk
     picture_label.configure(image=imgtk)
-    picture_label.after(1, capture_frame_and_show)
+
+    # Check the current state of the program
+    if curr_state == ProgState.CAMERA_BUFFER:
+        print("Reached here..")
+        global func_identifier
+        func_identifier = picture_label.after(1, capture_frame_and_show)
+        
 
 window = tk.Tk()
 
@@ -92,14 +132,26 @@ frame2.pack()
 picture_label = tk.Label(master=frame2)
 picture_label.pack()
 
+# Create a cascade classifier object
+face_cascade = cv.CascadeClassifier()
+
+# Load all the cascade models
+parser = argparse.ArgumentParser(description='Parser for cascade classifiers')
+parser.add_argument('--face_cascade', help='Path to face cascade', default='data/haarcascades/haarcascade_frontalface_alt.xml')
+args = parser.parse_args()
+face_cascade_name = args.face_cascade
+
+if not face_cascade.load(cv.samples.findFile(face_cascade_name)):
+    print("Couldn't load the face cascade model.")
+    exit()
 
 cap = cv.VideoCapture(0)
 if not cap.isOpened():
     print("Cannot open camera")
     exit()
 
-# Create a cascade classifier object
-face_cascade = cv.CascadeClassifier()
 
+curr_state = ProgState.CAMERA_BUFFER
 capture_frame_and_show()
+#detect_faces()
 window.mainloop()
