@@ -1,11 +1,10 @@
-from ast import arg
-from telnetlib import PRAGMA_HEARTBEAT
 import tkinter as tk
 import numpy as np 
 import cv2 as cv
 from PIL import Image, ImageTk
 import argparse 
 from enum import Enum
+from predictor import preprocess_img, resize_image, calc_embeddings
 
 func_identifier = None
 
@@ -42,10 +41,7 @@ def detect_faces():
         return
 
     # Our operations on the frame come here
-    cv2image = cv.cvtColor(frame, cv.COLOR_BGR2RGBA)
-
-    #cv2image = cv.cvtColor(cv2image, cv.COLOR_BGR2GRAY)
-    #cv2image = cv.equalizeHist(cv2image)
+    cv2image = cv.cvtColor(frame, cv.COLOR_BGR2RGB)
 
     # Detect faces
     faces = face_cascade.detectMultiScale(cv2image)
@@ -57,7 +53,25 @@ def detect_faces():
         thickness = 2
 
         cv2image = cv.rectangle(cv2image, rect_start_point, rect_end_point, color, thickness)
+        # For each face:
+        # 1. slice the image portion containing image.
+        crop_img = cv2image[y:y+h, x:x+w]
+        cv.imwrite('crop/one.png', crop_img)
+    
+        # 2. convert the image into a numpy array
+        crop_img = resize_image(crop_img, 160)
+        crop_img = preprocess_img(crop_img)
+        
+        crop_img = np.expand_dims(crop_img, axis=0)
+        print(crop_img.shape)
+        # 3. generate embeddings for that image
+        embeddings = calc_embeddings(crop_img)
+        print(embeddings)
+        print(embeddings.shape)
+        # 4. compare the generated embeddings against all the saved embeddings.
+        # 5. if found, assign a name to the image and display it.
 
+        
     img = Image.fromarray(cv2image)
     imgtk = ImageTk.PhotoImage(image=img)
 
@@ -70,7 +84,7 @@ def detect_faces():
         window.after_cancel(func_identifier)
         picture_label.after(1, detect_faces)
 
-##
+## Recognize the faces from saved faces..
 def recognize_faces():
     pass 
 
