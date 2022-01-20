@@ -19,7 +19,7 @@ def get_name_from_embeddings(embeddings_dict, embeddings):
     min_dist = 5000.00
     face_name = "Unknown"
 
-    for key, val in embeddings_dict:
+    for key, val in embeddings_dict.items():
         curr_embeddings = np.asarray(val)
 
         face_dist = calc_dist(curr_embeddings, embeddings)

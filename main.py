@@ -1,9 +1,11 @@
+from re import sub
 import tkinter as tk
 import numpy as np 
 import cv2 as cv
 from PIL import Image, ImageTk
 import argparse 
 from enum import Enum
+from utils import load_dict_from_json, get_name_from_embeddings
 from predictor import preprocess_img, resize_image, calc_embeddings, calc_dist, normalize_embeddings
 
 func_identifier = None
@@ -67,7 +69,7 @@ def detect_faces():
         #print(crop_img.shape)
         # 3. generate embeddings for that image
         embeddings = normalize_embeddings(calc_embeddings(crop_img))
-        print(type(embeddings))
+        #print(type(embeddings))
         # Calculate that distance from last embeddings
         global prev_embeddings
         print("Distance: " , calc_dist(embeddings, prev_embeddings))
@@ -76,7 +78,13 @@ def detect_faces():
         #print(embeddings.shape)
         # 4. compare the generated embeddings against all the saved embeddings.
         # 5. if found, assign a name to the image and display it.
-
+        embeddings_dict = load_dict_from_json('database.json')
+        subject_name = get_name_from_embeddings(embeddings_dict, embeddings)
+        print("Person: ", subject_name)
+        # Add the subject name to the image.
+        cv.rectangle(cv2image, (x, y + h - 15), (x+w, y+h), (0, 0, 255), cv.FILLED)
+        font = cv.FONT_HERSHEY_DUPLEX
+        cv.putText(cv2image, subject_name, (x + 6, y + h - 6), font, 1.0, (255, 255, 255), 1)
         
     img = Image.fromarray(cv2image)
     imgtk = ImageTk.PhotoImage(image=img)
