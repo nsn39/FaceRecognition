@@ -4,7 +4,7 @@ import cv2 as cv
 from PIL import Image, ImageTk
 import argparse 
 from enum import Enum
-from predictor import preprocess_img, resize_image, calc_embeddings
+from predictor import preprocess_img, resize_image, calc_embeddings, calc_dist, normalize_embeddings
 
 func_identifier = None
 
@@ -16,6 +16,7 @@ class ProgState(Enum):
     RECOGNIZE_FACE = 3
 
 curr_state = ProgState.CAMERA_BUFFER
+prev_embeddings = None
 
 def capture_image():
     pass 
@@ -63,11 +64,16 @@ def detect_faces():
         crop_img = preprocess_img(crop_img)
         
         crop_img = np.expand_dims(crop_img, axis=0)
-        print(crop_img.shape)
+        #print(crop_img.shape)
         # 3. generate embeddings for that image
-        embeddings = calc_embeddings(crop_img)
-        print(embeddings)
-        print(embeddings.shape)
+        embeddings = normalize_embeddings(calc_embeddings(crop_img))
+        print(type(embeddings))
+        # Calculate that distance from last embeddings
+        global prev_embeddings
+        print("Distance: " , calc_dist(embeddings, prev_embeddings))
+        prev_embeddings = embeddings
+        #print(embeddings)
+        #print(embeddings.shape)
         # 4. compare the generated embeddings against all the saved embeddings.
         # 5. if found, assign a name to the image and display it.
 

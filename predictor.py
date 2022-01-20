@@ -30,11 +30,17 @@ def resize_image(img, size):
 def calc_embeddings(image):
     return model.predict(image) 
 
-def calc_dist(img1, img2):
-    pass
+def calc_dist(embd1, embd2):
+    if embd2 is None:
+        return 0
+    
+    diff = (embd1 - embd2).flatten()
+    return np.sqrt(np.sum(np.square(diff)))
 
-def normalize_embeddings():
-    pass 
+
+def normalize_embeddings(embd):
+    magnitude = np.sqrt(np.sum(np.square(embd)))
+    return embd/magnitude 
 
 
 print(model.summary())
