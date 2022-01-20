@@ -31,6 +31,10 @@ def calc_embeddings(image):
     return model.predict(image) 
 
 def calc_dist(embd1, embd2):
+    """
+        Calculates the euclidean distance between two embeddings.
+        Both parameters must be numpy array.
+    """
     if embd2 is None:
         return 0
     
@@ -41,6 +45,3 @@ def calc_dist(embd1, embd2):
 def normalize_embeddings(embd):
     magnitude = np.sqrt(np.sum(np.square(embd)))
     return embd/magnitude 
-
-
-print(model.summary())
